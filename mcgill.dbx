@@ -1,0 +1,3 @@
+\DeclareDatamodelFields[type=field,datatype=literal]{jurisdiction,shortinstitution,shortjurisdiction}
+\DeclareDatamodelFields[type=field,format=xsv,datatype=entrykey]{parallel}
+\DeclareDatamodelEntryfields[jurisprudence]{jurisdiction,shortinstitution,shortjurisdiction,parallel}

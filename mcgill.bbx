@@ -1,0 +1,170 @@
+\ProvidesFile{mcgill.bbx}
+\RequireBibliographyStyle{verbose}
+
+\usepackage{expl3}
+\ExplSyntaxOn
+
+\DeclareDataInheritance{jurisprudence}{jurisprudence}{
+  \noinherit{eid}
+  \noinherit{volume}
+  \noinherit{pages}
+  \noinherit{publisher}
+  \noinherit{url}
+  \noinherit{urldate}
+  \noinherit{journaltitle}
+  \noinherit{shortjournal}
+  \noinherit{keywords}
+  \noinherit{parallel}
+}
+
+\DeclareStyleSourcemap{
+  \maps{
+    \map{
+      \pertype{jurisprudence}
+      \step[notfield=year, final]
+      \step[notfield=date, final]
+      \step[fieldsource=origdate]
+      \step[fieldset=date, origfieldval=true]
+      \step[fieldsource=origyear]
+      \step[fieldset=year, origfieldval=true]
+    }
+    \map{
+      \pertype{jurisprudence}
+      \step[notfield=origyear, final]
+      \step[notfield=origdate, final]
+      \step[fieldsource=date]
+      \step[fieldset=origdate, origfieldval=true]
+      \step[fieldsource=year]
+      \step[fieldset=origyear, origfieldval=true]
+    }
+  }
+}
+
+\DeclareFieldFormat{title}{\emph{#1}}
+\DeclareFieldFormat{shorttitle}{\emph{#1}}
+\DeclareFieldFormat{shorthand}{\emph{#1}}
+\DeclareFieldFormat{volume}{#1}
+\DeclareFieldFormat{pages}{#1}
+\DeclareFieldFormat{firstpage}{\mkfirstpage{#1}}
+\DeclareFieldFormat{or0}{\ifempty{#1}{0}{#1}}
+
+\newcommand{\ifneutral}{\iffieldequalstr{entrysubtype}{neutral}}
+\newcommand{\ifofficial}{\iffieldequalstr{entrysubtype}{official}}
+\newcommand{\ifannual}{\ifkeyword{annual}}
+\newcommand{\ifciteyear}{
+  \ifboolexpr{
+    test {\ifkeyword{citeyear}}
+    or
+    test {\ifneutral}
+  }
+}
+\newcommand{\ifneedinstitution}{
+  \ifboolexpr{
+    not test {\ifkeyword{hasinstitution}}
+  }
+}
+\newcommand{\ifneedjurisdiction}{
+  \ifboolexpr{
+    not test {\ifkeyword{hasinstitution}}
+    and
+    not test {\ifkeyword{hasjurisdiction}}
+  }
+}
+\newcommand{\ifneedyear}{
+  % Print the decision year iff the correct year is not already present.
+  %   1. If the citation is neutral, nothing to do.
+  %   2. If the reporter includes the year of decision, nothing to do.
+  %   3. If the reporter includes the year of publication, AND
+  %      a separate year of publication is provided, AND
+  %      it is different, nothing to do.
+  %   4. Otherwise print the year.
+  % Ref McGill, s. 3.4
+  \ifboolexpr{
+    not test {\ifciteyear}
+    and
+    not (
+      test {\ifannual}
+      and
+      test {\ifnumequal
+	{\iffieldundef{year}{0}{\thefield{year}}}
+	{\iffieldundef{origyear}{1}{\thefield{origyear}}}
+      }
+    )
+  }
+}
+
+\newbibmacro*{print:citation}{
+  \ifannual {\printtext{[\printfield{year}]}~} {}
+  \ifciteyear {\printfield{origyear}~} {}
+  \iffieldundef {volume} {} {\printfield{volume}~}
+  \printfield {shortjournal}
+  \setunit* {~}
+  \iffieldundef {series} {} {\printtext{(\printfield{series})}}
+  \setunit* {~}
+  \printfield[firstpage]{pages}
+  \setunit* {~}
+  \printfield {eid}
+  \setunit* {~}
+  \printfield {number}
+  \setunit* {~}
+}
+
+\cs_generate_variant:Nn \seq_set_from_clist:Nn {Nx}
+
+\newbibmacro* {print:citations} {
+  \usebibmacro {print:citation}
+  \newunit \newblock
+  \iffieldundef {parallel} {} {
+    \seq_set_from_clist:Nx \l_tmpa_seq {\thefield{parallel}}
+    \seq_map_inline:Nn \l_tmpa_seq {
+      \entrydata {##1} {\usebibmacro{print:citation}}
+      \newunit\newblock
+    }
+  }  
+}
+
+\newbibmacro* {print:institution} {
+  \ifneedinstitution{
+    \printtext{~(}
+    \ifneedjurisdiction{
+       \printfield{shortjurisdiction}~
+    }{}
+    \printfield{shortinstitution})
+  }{}
+}
+
+\renewcommand {\newunitpunct} {,~}
+\renewbibmacro* {shorthandintro} {\printtext{[\printfield{shorthand}]}}
+
+\DeclareBibliographyAlias {jurisdiction} {jurisprudence}
+\DeclareBibliographyAlias {jurisdiction:omitstyle} {jurisprudence:omitstyle}
+\DeclareBibliographyDriver {jurisprudence} {
+  \printfield {title}
+  \ifneedyear {\printtext {~(\printfield{origyear})}} {}
+  \newunit \newblock
+  \usebibmacro {print:citations}
+  \usebibmacro {print:institution}
+}
+\DeclareBibliographyDriver {jurisprudence:omitstyle} {
+  \ifneedyear {
+    \printtext {~(\printfield{origyear})}
+    \newunit \newblock
+  }
+  \usebibmacro {print:citations}
+  \usebibmacro {print:institution}
+}
+\DeclareBibliographyDriver {jurisprudence:citation}{
+  \usebibmacro {print:citation}
+}
+
+\DeclareBibliographyCategory {parallel}
+\newcommand {\parcite} [1] {
+   \addtocategory {parallel} {#1}
+   \nocite{#1}
+}
+\defbibfilter {mcgill}{
+   % \defbibfilter doesn't play nice with ExplSyntax
+   not~category=parallel
+}
+
+\ExplSyntaxOff

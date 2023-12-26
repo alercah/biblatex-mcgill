@@ -1,0 +1,72 @@
+\ProvidesFile{mcgill.cbx}
+\RequireCitationStyle{verbose}
+
+\usepackage{expl3}
+\usepackage{nth}
+\ExplSyntaxOn
+
+\ExecuteBibliographyOptions{citecounter=context}
+
+\newtoggle{cite:omitstyle}
+\renewbibmacro*{cite:full}{
+  \usebibmacro{cite:full:citepages}
+  \printtext[bibhypertarget]{
+    \usedriver{}{
+      \thefield{entrytype}
+      \iftoggle{cite:omitstyle}{:omitstyle}{}
+    }
+  }~
+  \ifnumgreater{\thecitecounter}{1}{\usebibmacro{shorthandintro}}{}
+}
+
+\renewbibmacro*{cite:short}{
+  \printtext[bibhyperlink]{
+    \printfield{title}
+  }
+}
+
+\renewbibmacro*{textcite}{
+  \citetrackertrue
+  \ifciteseen
+    {\printfield{shorthand}}
+    {\printfield{title}}
+}
+
+\renewbibmacro*{cite:shorthand}{
+  \printtext[bibhyperlink]{\printfield{shorthand}}
+}
+
+\newbibmacro*{footcite}{
+  \ifciteseen
+    {\usebibmacro{cite:shorthand},~\emph{supra}}
+    {\usebibmacro{cite:full}
+  }
+}
+
+\DeclareCiteCommand{\footcite}[\mkbibfootnote]
+  {\usebibmacro{prenote}}
+  {
+    \usebibmacro{citeindex}
+    \usebibmacro{footcite}
+  }
+  {\multicitedelim}
+  {\usebibmacro{cite:postnote}}
+
+\newbibmacro*{textcite:realinit}{
+  \toggletrue{cite:omitstyle}
+}
+
+\renewrobustcmd{\cbx@textcite@init}[3]{%
+  \setcounter{textcitetotal}{0}%
+  \setcounter{textcitecount}{0}%
+  \setcounter{textcitemaxnames}{0}%
+  \usebibmacro{textcite:realinit}%
+  \def\cbx@textcite@args{#1}\def\cbx@footcite@args{#2}#3%
+  \cbx@textcite@args\empty\cbx@footcite@args\empty}
+
+% Citation commands:
+%   - \cite -> style of cause/shorthand only
+%   - \footcite -> standard footnote citation
+%   - \textcite -> full or short style of cause only, with intro footnote if not seen
+
+\ExplSyntaxOff

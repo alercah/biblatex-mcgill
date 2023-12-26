@@ -1,0 +1,23 @@
+\documentclass{article}
+%\usepackage{hyperref}
+\usepackage[style=mcgill]{biblatex}
+\addbibresource{mcgill.bib}
+\addbibresource{charter.bib}
+
+\title{Experiments in Citation}
+\author{alercah}
+\date{December 2023}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+In the seminal case \textcite{oakes}, the Supreme Court said fuck all y'all. Another case was a Halloween surprise,\footcite{sauvé} but it was missing the key quote ``seriously, fuck all y'all".\footcite{oakes} As a result, I much prefer \textcite{oakes}.
+
+Testing: \cite{oakes} \cite{oakes} \parcite{sauvé:official} \parcite{oakes:canlii}
+
+\printbibliography[filter=mcgill]
+
+\end{document}
