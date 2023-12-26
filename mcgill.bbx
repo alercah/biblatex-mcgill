@@ -4,73 +4,86 @@
 \usepackage{expl3}
 \ExplSyntaxOn
 
-\DeclareDataInheritance{jurisprudence}{jurisprudence}{
-  \noinherit{eid}
-  \noinherit{volume}
-  \noinherit{pages}
-  \noinherit{publisher}
-  \noinherit{url}
-  \noinherit{urldate}
-  \noinherit{journaltitle}
-  \noinherit{shortjournal}
-  \noinherit{keywords}
-  \noinherit{parallel}
+\ExecuteBibliographyOptions{citecounter=true}
+
+\bool_new:N \mcgill_nested
+\bool_new:N \mcgill_omitstyle
+\seq_new:N \mcgill_parallels
+\prop_new:N \mcgill_maincitations
+
+\cs_generate_variant:Nn \seq_set_from_clist:Nn {Nx}
+\cs_generate_variant:Nn \msg_warning:nnnn {nnxx}
+\cs_generate_variant:Nn \tl_if_eq:NnT {NeT}
+
+\DeclareDataInheritance {jurisprudence} {jurisprudence} {
+  \noinherit {eid}
+  \noinherit {volume}
+  \noinherit {pages}
+  \noinherit {publisher}
+  \noinherit {url}
+  \noinherit {urldate}
+  \noinherit {journaltitle}
+  \noinherit {shortjournal}
+  \noinherit {keywords}
+  \noinherit {parallel}
 }
 
-\DeclareStyleSourcemap{
-  \maps{
-    \map{
-      \pertype{jurisprudence}
-      \step[notfield=year, final]
-      \step[notfield=date, final]
-      \step[fieldsource=origdate]
-      \step[fieldset=date, origfieldval=true]
-      \step[fieldsource=origyear]
-      \step[fieldset=year, origfieldval=true]
+\DeclareStyleSourcemap {
+  \maps {
+    \map {
+      \pertype {jurisprudence}
+      \step [notfield=year, final]
+      \step [notfield=date, final]
+      \step [fieldsource=origdate]
+      \step [fieldset=date, origfieldval=true]
+      \step [fieldsource=origyear]
+      \step [fieldset=year, origfieldval=true]
     }
-    \map{
-      \pertype{jurisprudence}
-      \step[notfield=origyear, final]
-      \step[notfield=origdate, final]
-      \step[fieldsource=date]
-      \step[fieldset=origdate, origfieldval=true]
-      \step[fieldsource=year]
-      \step[fieldset=origyear, origfieldval=true]
+    \map {
+      \pertype {jurisprudence}
+      \step [notfield=origyear, final]
+      \step [notfield=origdate, final]
+      \step [fieldsource=date]
+      \step [fieldset=origdate, origfieldval=true]
+      \step [fieldsource=year]
+      \step [fieldset=origyear, origfieldval=true]
     }
   }
 }
 
-\DeclareFieldFormat{title}{\emph{#1}}
-\DeclareFieldFormat{shorttitle}{\emph{#1}}
-\DeclareFieldFormat{shorthand}{\emph{#1}}
-\DeclareFieldFormat{volume}{#1}
-\DeclareFieldFormat{pages}{#1}
-\DeclareFieldFormat{firstpage}{\mkfirstpage{#1}}
-\DeclareFieldFormat{or0}{\ifempty{#1}{0}{#1}}
+\DeclareFieldFormat {title} {\emph{#1}}
+\DeclareFieldFormat {shorttitle} {\emph{#1}}
+\DeclareFieldFormat {shorthand} {\emph{#1}}
+\DeclareFieldFormat {volume} {#1}
+\DeclareFieldFormat {pages} {#1}
+\DeclareFieldFormat {series} {(#1)}
+\DeclareFieldFormat {year} {[#1]}
+\DeclareFieldFormat {origyear} {(#1)}
+\DeclareFieldFormat {firstpage} {\mkfirstpage{#1}}
 
-\newcommand{\ifneutral}{\iffieldequalstr{entrysubtype}{neutral}}
-\newcommand{\ifofficial}{\iffieldequalstr{entrysubtype}{official}}
-\newcommand{\ifannual}{\ifkeyword{annual}}
-\newcommand{\ifciteyear}{
-  \ifboolexpr{
-    test {\ifkeyword{citeyear}}
+\newcommand {\ifneutral} {\iffieldequalstr {entrysubtype} {neutral}}
+\newcommand {\ifofficial} {\iffieldequalstr {entrysubtype} {official}}
+\newcommand {\ifannual} {\ifkeyword{annual}}
+\newcommand {\ifciteyear} {
+  \ifboolexpr {
+    test {\ifkeyword {citeyear}}
     or
     test {\ifneutral}
   }
 }
-\newcommand{\ifneedinstitution}{
-  \ifboolexpr{
-    not test {\ifkeyword{hasinstitution}}
+\newcommand {\ifneedinstitution} {
+  \ifboolexpr {
+    not test {\ifkeyword {hasinstitution}}
   }
 }
-\newcommand{\ifneedjurisdiction}{
-  \ifboolexpr{
-    not test {\ifkeyword{hasinstitution}}
+\newcommand {\ifneedjurisdiction} {
+  \ifboolexpr {
+    not test {\ifkeyword {hasinstitution}}
     and
-    not test {\ifkeyword{hasjurisdiction}}
+    not test {\ifkeyword{ hasjurisdiction}}
   }
 }
-\newcommand{\ifneedyear}{
+\newcommand {\ifneedyear} {
   % Print the decision year iff the correct year is not already present.
   %   1. If the citation is neutral, nothing to do.
   %   2. If the reporter includes the year of decision, nothing to do.
@@ -79,29 +92,32 @@
   %      it is different, nothing to do.
   %   4. Otherwise print the year.
   % Ref McGill, s. 3.4
-  \ifboolexpr{
+  \ifboolexpr {
     not test {\ifciteyear}
     and
     not (
       test {\ifannual}
       and
       test {\ifnumequal
-	{\iffieldundef{year}{0}{\thefield{year}}}
-	{\iffieldundef{origyear}{1}{\thefield{origyear}}}
+	{\iffieldundef {year} {0} {\thefield{year}}}
+	{\iffieldundef {origyear} {1} {\thefield{origyear}}}
       }
     )
   }
 }
 
-\newbibmacro*{print:citation}{
-  \ifannual {\printtext{[\printfield{year}]}~} {}
-  \ifciteyear {\printfield{origyear}~} {}
-  \iffieldundef {volume} {} {\printfield{volume}~}
+\newbibmacro* {print:citation}{
+  \ifannual {\printfield {year}} {}
+  \setunit* {~}
+  \ifciteyear {\printfield [volume] {origyear}} {}
+  \setunit* {~}
+  \printfield {volume} 
+  \setunit* {~}
   \printfield {shortjournal}
   \setunit* {~}
-  \iffieldundef {series} {} {\printtext{(\printfield{series})}}
+  \printfield {series}
   \setunit* {~}
-  \printfield[firstpage]{pages}
+  \printfield [firstpage] {pages}
   \setunit* {~}
   \printfield {eid}
   \setunit* {~}
@@ -109,52 +125,151 @@
   \setunit* {~}
 }
 
-\cs_generate_variant:Nn \seq_set_from_clist:Nn {Nx}
-
 \newbibmacro* {print:citations} {
   \usebibmacro {print:citation}
-  \newunit \newblock
-  \iffieldundef {parallel} {} {
-    \seq_set_from_clist:Nx \l_tmpa_seq {\thefield{parallel}}
-    \seq_map_inline:Nn \l_tmpa_seq {
-      \entrydata {##1} {\usebibmacro{print:citation}}
-      \newunit\newblock
-    }
-  }  
+  \seq_if_empty:NT \mcgill_parallels {
+    \seq_set_from_clist:Nx \mcgill_parallels {\thefield{parallel}}
+  }
+  \seq_map_inline:Nn \mcgill_parallels {
+    \newunit \newblock
+    \entrydata {##1} {\usebibmacro{print:citation}}
+  }
 }
 
 \newbibmacro* {print:institution} {
   \ifneedinstitution{
-    \printtext{~(}
+    \printtext {~(}
     \ifneedjurisdiction{
-       \printfield{shortjurisdiction}~
-    }{}
-    \printfield{shortinstitution})
-  }{}
+       \printfield {shortjurisdiction}~
+    } {}
+    \printfield {shortinstitution})
+  } {}
+}
+
+\newbibmacro* {maindata} [1] {
+  \prop_if_in:NeT \mcgill_maincitations {\thefield {entrykey}} {
+    \entrydata
+      {\prop_item:Ne \mcgill_maincitations {\thefield {entrykey}}}
+      {#1}
+  }
+}
+
+\newbibmacro* {style} {
+  \iffieldundef {title}
+    {\usebibmacro {maindata} {\thefield {title}}}
+    {\thefield {title}}
+}
+
+\newbibmacro* {shorthand} {
+  \iffieldundef {shorthand}
+    {\usebibmacro {maindata} {\thefield {shorthand}}}
+    {\thefield {shorthand}}
+}
+
+\newbibmacro* {print:style} {
+  \printtext [title] {\usebibmacro{style}}
+}
+
+\newbibmacro* {print:shorthand} {
+  \printtext [shorthand] {\usebibmacro{shorthand}}
 }
 
 \renewcommand {\newunitpunct} {,~}
-\renewbibmacro* {shorthandintro} {\printtext{[\printfield{shorthand}]}}
+\renewbibmacro* {shorthandintro} {
+  \ifnumgreater {\thecitecounter} {1} {
+    \printtext {[\usebibmacro{print:shorthand}]}
+  } {}
+}
 
 \DeclareBibliographyAlias {jurisdiction} {jurisprudence}
-\DeclareBibliographyAlias {jurisdiction:omitstyle} {jurisprudence:omitstyle}
 \DeclareBibliographyDriver {jurisprudence} {
-  \printfield {title}
-  \ifneedyear {\printtext {~(\printfield{origyear})}} {}
+  \bool_if:NF \mcgill_omitstyle {
+    \usebibmacro {print:style}
+  }
+  \ifneedyear {
+    \printfield {origyear}
+  } {}
   \newunit \newblock
   \usebibmacro {print:citations}
   \usebibmacro {print:institution}
-}
-\DeclareBibliographyDriver {jurisprudence:omitstyle} {
-  \ifneedyear {
-    \printtext {~(\printfield{origyear})}
-    \newunit \newblock
+  \setunit* {~}
+  \bool_if:NF \mcgill_nested {
+    \usebibmacro {shorthandintro}
   }
-  \usebibmacro {print:citations}
-  \usebibmacro {print:institution}
 }
-\DeclareBibliographyDriver {jurisprudence:citation}{
+\DeclareBibliographyDriver {jurisprudence:citation} {
   \usebibmacro {print:citation}
+}
+
+\newbibmacro* {mcgill:set} {
+  \entryset {} {}
+  \newunit \newblock
+  \usebibmacro {setpageref}
+  \finentry
+}
+
+\msg_new:nnn {mcgill} {warn:neutral-parallel} {
+  Warning:~report~set~`#1`~has~neutral~citation~`#2'~
+  in~addition~to~parallel~citations
+}
+
+\newbibmacro* {check:neutral-parallel} {
+  \ifcitation {\bool_set_true:N} {\bool_set_false:N} \l_tmpa_bool
+  \bool_if:nT {
+      \l_mcgill_foundneutral &&
+      !\seq_if_empty_p:N \mcgill_parallels &&
+      !\l_tmpa_bool
+  } {
+    \msg_warning:nnxx {mcgill} {warn:neutral-parallel}
+      {\thefield{entrykey}} {\l_mcgill_maincitation}
+  }
+}
+
+\newbibmacro* {mcgill:findmain} {
+  \ifboolexpr {
+     test {\iffieldequalstr {entrytype} {set}}
+     and
+     not test {\prop_if_in:NeTF \mcgill_maincitations {\thefield {entrykey}}}
+  } {
+    \seq_set_from_clist:Nx \mcgill_parallels {\thefield{entryset}}
+    \seq_get_left:NN \mcgill_parallels \l_mcgill_maincitation
+    \bool_gset_false:N \l_mcgill_foundneutral
+
+    \seq_map_inline:Nn \mcgill_parallels {
+      \entrydata {##1} {
+        \ifneutral {
+          \tl_gset:Nn \l_mcgill_maincitation {##1}
+          \bool_gset_true:N \l_mcgill_foundneutral
+        }{}
+        \ifofficial {
+          \tl_gset:Nn \l_mcgill_maincitation {##1}
+        }{}
+      }
+      \bool_if:NT \l_mcgill_foundneutral {
+        \seq_map_break:
+      }
+    }
+
+    \prop_gput:NeV \mcgill_maincitations {\thefield{entrykey}} \l_mcgill_maincitation
+    \usebibmacro {check:neutral-parallel}
+  } {}
+}
+
+\newbibmacro* {mcgill:reportset} {
+  \bool_set_true:N \mcgill_nested
+  \seq_set_from_clist:Nx \mcgill_parallels {\thefield{entryset}}
+  \seq_remove_all:Nx \mcgill_parallels {
+    \prop_item:Ne \mcgill_maincitations {\thefield{entrykey}}
+  }
+  \usebibmacro {maindata} {\usedriver {} {\thefield{entrytype}}}
+  \setunit{~}
+  \usebibmacro {shorthandintro}
+}
+
+\DeclareBibliographyDriver {set} {
+  \iffieldequalstr {entrysubtype} {reports}
+    {\usebibmacro{mcgill:set}}
+    {\usebibmacro{mcgill:reportset}}
 }
 
 \DeclareBibliographyCategory {parallel}

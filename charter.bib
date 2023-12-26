@@ -1,4 +1,4 @@
-@jurisprudence{oakes,
+@jurisprudence{oakes:official,
   title={R. v Oakes},
   shorthand={Oakes},
   origdate={1986-02-28},
@@ -8,31 +8,40 @@
   publisher={CanLII},
   url={https://canlii.ca/t/1ftv6},
   urldate={2023-12-22},
-  parallel={oakes:canlii},
 }
 
 @jurisprudence{oakes:canlii,
   xdata={i:SCC, j:CanLII},
-  crossref={oakes},
+  crossref={oakes:official},
   eid=46,
 }
 
-@jurisprudence{sauvé,
+@set{oakes,
+  entryset={oakes:official, oakes:canlii},
+  %shorthand={Oakes},
+  %entrysubtype={reports},
+}
+
+@jurisprudence{sauvé:neutral,
   title={Sauvé v Canada (Chief Electoral Officer)},
   shorthand={Sauvé},
   origdate={2002-10-31},
   xdata={j:SCC},
-  year=2003,
   eid=68,
   publisher={CanLII},
   url={https://canlii.ca/t/50cw},
   urldate={2023-12-22},
-  parallel={sauvé:official},
 }
 
 @jurisprudence{sauvé:official,
   xdata={j:SCR},
-  crossref={sauvé},
+  crossref={sauvé:neutral},
   volume=1,
   pages=519,
+}
+
+@set{sauvé,
+  entryset={sauvé:neutral, sauvé:official},
+  %shorthand={Sauvé},
+  %entrysubtype={reports},
 }

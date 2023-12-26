@@ -5,62 +5,104 @@
 \usepackage{nth}
 \ExplSyntaxOn
 
-\ExecuteBibliographyOptions{citecounter=context}
-
-\newtoggle{cite:omitstyle}
-\renewbibmacro*{cite:full}{
-  \usebibmacro{cite:full:citepages}
-  \printtext[bibhypertarget]{
-    \usedriver{}{
-      \thefield{entrytype}
-      \iftoggle{cite:omitstyle}{:omitstyle}{}
-    }
-  }~
-  \ifnumgreater{\thecitecounter}{1}{\usebibmacro{shorthandintro}}{}
+\renewbibmacro* {cite} {
+  \ifciteseen
+    {\usebibmacro {print:shorthand}}
+    {\usebibmacro {print:style}}
 }
 
-\renewbibmacro*{cite:short}{
-  \printtext[bibhyperlink]{
-    \printfield{title}
+\renewbibmacro* {cite:full} {
+  \usebibmacro {cite:full:citepages}
+  \printtext [bibhypertarget] {
+    \usedriver {} {\thefield{entrytype}}
   }
 }
 
-\renewbibmacro*{textcite}{
+\renewbibmacro* {cite:short} {
+  \printtext [bibhyperlink] {
+    {\usebibmacro {print:style}}
+  }
+}
+
+\renewbibmacro* {textcite} {
   \citetrackertrue
-  \ifciteseen
-    {\printfield{shorthand}}
-    {\printfield{title}}
+  \usebibmacro* {cite}
 }
 
-\renewbibmacro*{cite:shorthand}{
-  \printtext[bibhyperlink]{\printfield{shorthand}}
+\renewbibmacro* {cite:shorthand} {
+  \printtext [bibhyperlink] {\usebibmacro {print:shorthand}}
 }
 
-\newbibmacro*{footcite}{
+\newbibmacro* {footcite} {
   \ifciteseen
     {\usebibmacro{cite:shorthand},~\emph{supra}}
     {\usebibmacro{cite:full}
   }
 }
 
-\DeclareCiteCommand{\footcite}[\mkbibfootnote]
-  {\usebibmacro{prenote}}
+\newbibmacro* {cite:prenote} {
+  \usebibmacro {prenote}
+  \usebibmacro {mcgill:findmain}
+}
+
+\DeclareCiteCommand {\cite}
+  {\usebibmacro {cite:prenote}}
   {
-    \usebibmacro{citeindex}
-    \usebibmacro{footcite}
+    \usebibmacro {citeindex}
+    \usebibmacro {cite}
   }
   {\multicitedelim}
-  {\usebibmacro{cite:postnote}}
+  {\usebibmacro {cite:postnote}}
 
-\newbibmacro*{textcite:realinit}{
-  \toggletrue{cite:omitstyle}
-}
+\DeclareCiteCommand {\parencite} [\mkbibparens]
+  {\usebibmacro {cite:prenote}}
+  {
+    \usebibmacro {citeindex}
+    \usebibmacro {cite}
+  }
+  {\multicitedelim}
+  {\usebibmacro {cite:postnote}}
+
+\DeclareCiteCommand {\footcite} [\mkbibfootnote]
+  {\usebibmacro {cite:prenote}}
+  {
+    \usebibmacro {citeindex}
+    \usebibmacro {footcite}
+  }
+  {\multicitedelim}
+  {\usebibmacro {cite:postnote}}
+
+\DeclareCiteCommand{\footcitetext} [\mkbibfootnotetext]
+  {\usebibmacro {cite:prenote}}
+  {
+    \usebibmacro {citeindex}
+    \usebibmacro {cite}
+  }
+  {\multicitedelim}
+  {\usebibmacro {cite:postnote}}
+
+\DeclareCiteCommand{\smartcite} [\iffootnote\mkbibparens\mkbibfootnote]
+  {\usebibmacro {cite:prenote}}
+  {
+    \usebibmacro {citeindex}
+    \usebibmacro {cite}
+  }
+  {\multicitedelim}
+  {\usebibmacro {cite:postnote}}
+
+\renewbibmacro*{textcite:init}{%
+  \citetrackerfalse%
+  \pagetrackerfalse%
+  \usebibmacro{mcgill:findmain}%
+  \iffirstcitekey
+    {\global\undef\cbx@lasthash}
+    {}}
 
 \renewrobustcmd{\cbx@textcite@init}[3]{%
   \setcounter{textcitetotal}{0}%
   \setcounter{textcitecount}{0}%
   \setcounter{textcitemaxnames}{0}%
-  \usebibmacro{textcite:realinit}%
+  \bool_set_true:N \mcgill_omitstyle
   \def\cbx@textcite@args{#1}\def\cbx@footcite@args{#2}#3%
   \cbx@textcite@args\empty\cbx@footcite@args\empty}
 
